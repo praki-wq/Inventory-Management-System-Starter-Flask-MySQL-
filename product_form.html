@@ -1,0 +1,73 @@
+{% extends "base.html" %}   {# If you are using a base.html layout #}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">{{ action }} Product</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <!-- SKU -->
+        <div class="mb-3">
+            <label for="sku" class="form-label">SKU</label>
+            <input type="text" class="form-control" id="sku" name="sku" 
+                   value="{{ product.sku if product else '' }}" required>
+        </div>
+
+        <!-- Product Name -->
+        <div class="mb-3">
+            <label for="name" class="form-label">Product Name</label>
+            <input type="text" class="form-control" id="name" name="name" 
+                   value="{{ product.name if product else '' }}" required>
+        </div>
+
+        <!-- Category -->
+        <div class="mb-3">
+            <label for="category" class="form-label">Category</label>
+            <input type="text" class="form-control" id="category" name="category" 
+                   value="{{ product.category if product else '' }}">
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ product.description if product else '' }}</textarea>
+        </div>
+
+        <!-- Quantity -->
+        <div class="mb-3">
+            <label for="quantity" class="form-label">Quantity</label>
+            <input type="number" class="form-control" id="quantity" name="quantity" 
+                   value="{{ product.quantity if product else 0 }}">
+        </div>
+
+        <!-- Reorder Level -->
+        <div class="mb-3">
+            <label for="reorder_level" class="form-label">Reorder Level</label>
+            <input type="number" class="form-control" id="reorder_level" name="reorder_level" 
+                   value="{{ product.reorder_level if product else 0 }}">
+        </div>
+
+        <!-- Price -->
+        <div class="mb-3">
+            <label for="price" class="form-label">Price ($)</label>
+            <input type="number" step="0.01" class="form-control" id="price" name="price" 
+                   value="{{ product.price if product else 0.0 }}">
+        </div>
+
+        <!-- Product Image -->
+        <div class="mb-3">
+            <label for="image" class="form-label">Product Image</label>
+            {% if product and product.image_url %}
+                <div class="mb-2">
+                    <img src="{{ url_for('static', filename=product.image_url) }}" 
+                         alt="Product Image" class="img-thumbnail" style="max-height: 120px;">
+                </div>
+                <input type="hidden" name="current_image" value="{{ product.image_url }}">
+            {% endif %}
+            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-success w-100">{{ action }} Product</button>
+    </form>
+</div>
+{% endblock %}

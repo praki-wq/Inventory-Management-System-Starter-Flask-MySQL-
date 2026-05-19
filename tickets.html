@@ -1,0 +1,42 @@
+
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Support Tickets</h2>
+    <table class="table table-bordered table-striped mt-3">
+        <thead>
+            <tr>
+                <th>ID</th>
+                {% if session.is_admin %}<th>User</th>{% endif %}
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Created At</th>
+                {% if session.is_admin %}<th>Action</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr>
+                <td>{{ ticket.id }}</td>
+                {% if session.is_admin %}<td>{{ ticket.username }}</td>{% endif %}
+                <td>{{ ticket.subject }}</td>
+                <td>{{ ticket.status }}</td>
+                <td>{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                {% if session.is_admin %}
+                <td>
+                    <form method="POST" action="{{ url_for('update_ticket', ticket_id=ticket.id) }}">
+                        <select name="status" class="form-select form-select-sm d-inline w-auto">
+                            <option value="Open" {% if ticket.status=='Open' %}selected{% endif %}>Open</option>
+                            <option value="In Progress" {% if ticket.status=='In Progress' %}selected{% endif %}>In Progress</option>
+                            <option value="Closed" {% if ticket.status=='Closed' %}selected{% endif %}>Closed</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-success ms-1">Update</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

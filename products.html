@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Products - Inventory Management{% endblock %}
+
+{% block content %}
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-box-seam"></i> Total Products</h5>
+                <p class="card-text fs-4">{{ total_products }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning mb-3 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-exclamation-triangle"></i> Low Stock</h5>
+                <p class="card-text fs-4">{{ low_stock }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-tags"></i> Categories</h5>
+                <p class="card-text fs-4">{{ categories_count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <a href="{{ url_for('add_product') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Add New Product
+        </a>
+        <a href="{{ url_for('low_stock_report') }}" class="btn btn-warning ms-2">
+            <i class="bi bi-exclamation-triangle"></i> Low Stock Report
+        </a>
+    </div>
+</div>
+
+<div class="mb-4 d-flex">
+    <a href="{{ url_for('export_csv') }}" class="btn btn-outline-success me-2">
+        <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+    </a>
+    <a href="{{ url_for('export_pdf') }}" class="btn btn-outline-danger">
+        <i class="bi bi-file-earmark-pdf"></i> Export PDF
+    </a>
+</div>
+
+<!-- Filters & Sorting -->
+<form method="get" class="row g-3 mb-4 align-items-center">
+    <div class="col-md-3">
+        <select name="category" class="form-select">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}" {% if selected_category==cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="stock" class="form-select">
+            <option value="">All Stock Levels</option>
+            <option value="low" {% if selected_stock=='low' %}selected{% endif %}>Low Stock</option>
+            <option value="in_stock" {% if selected_stock=='in_stock' %}selected{% endif %}>In Stock</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="sort_by" class="form-select">
+            <option value="">Sort By</option>
+            <option value="name_asc" {% if selected_sort=='name_asc' %}selected{% endif %}>Name A-Z</option>
+            <option value="name_desc" {% if selected_sort=='name_desc' %}selected{% endif %}>Name Z-A</option>
+            <option value="price_asc" {% if selected_sort=='price_asc' %}selected{% endif %}>Price Low-High</option>
+            <option value="price_desc" {% if selected_sort=='price_desc' %}selected{% endif %}>Price High-Low</option>
+            <option value="stock_asc" {% if selected_sort=='stock_asc' %}selected{% endif %}>Stock Low-High</option>
+            <option value="stock_desc" {% if selected_sort=='stock_desc' %}selected{% endif %}>Stock High-Low</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Apply Filters</button>
+    </div>
+</form>
+
+<!-- Products Grid -->
+<div class="row g-4">
+    {% for product in products %}
+    <div class="col-md-4 col-lg-3">
+        <div class="card shadow-sm h-100 card-hover position-relative">
+
+            <!-- Product Image -->
+            <div class="product-image">
+                {% if product.image_url %}
+                    <img src="{{ url_for('static', filename=product.image_url) }}" class="card-img-top" alt="{{ product.name }}" style="height:200px; object-fit:cover;">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/default-product.png') }}" class="card-img-top" alt="{{ product.name }}" style="height:200px; object-fit:cover;">
+                {% endif %}
+            </div>
+
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-primary fw-bold">{{ product.name }}</h5>
+                <p class="text-muted small mb-1"><i class="bi bi-tags"></i> {{ product.category }}</p>
+                <p class="card-text text-truncate" style="max-height: 60px;">{{ product.description }}</p>
+
+                <div class="mt-auto">
+                    <p class="mb-1">
+                        <span class="badge bg-{{ 'danger' if product.quantity <= product.reorder_level else 'success' }}">
+                            Stock: {{ product.quantity }}
+                        </span>
+                    </p>
+                    <p class="fw-bold text-dark">₹{{ "%.2f"|format(product.price) }}</p>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('edit_product', pid=product.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </a>
+
+                        <!-- Quick View Button -->
+                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ product.id }}">
+                            <i class="bi bi-eye"></i> View
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick View Modal -->
+            <div class="modal fade" id="quickViewModal{{ product.id }}" tabindex="-1" aria-labelledby="quickViewLabel{{ product.id }}" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="quickViewLabel{{ product.id }}">{{ product.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body d-flex">
+                    <img src="{{ url_for('static', filename=product.image_url or 'images/default-product.png') }}" class="img-fluid me-3" style="max-width:200px;">
+                    <div>
+                        <p><strong>Category:</strong> {{ product.category }}</p>
+                        <p><strong>Description:</strong> {{ product.description }}</p>
+                        <p><strong>Stock:</strong> {{ product.quantity }}</p>
+                        <p><strong>Price:</strong> ₹{{ "%.2f"|format(product.price) }}</p>
+                        <p><strong>Last Updated:</strong> {{ product.last_updated.strftime('%Y-%m-%d %H:%M') if product.last_updated else 'N/A' }}</p>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
